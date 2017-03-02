@@ -16,28 +16,41 @@ type alertMessage struct {
 	color string
 }
 
-func (am *alertMessage) sentSlack() {
+type connection struct {
+	protocol string
+	host     string
+	port     string
+	address  string
+}
+
+func checkError(err error) {
+	if err == nil {
+		return
+	}
+	log.Printf("error: %s", err)
+}
+
+func (c *connection) conn() (net.Conn, error) {
+	conn, err := net.DialTimeout(c.protocol, c.address, 3*time.Second)
+	checkError(err)
+	return conn, err
+}
+
+func (a *alertMessage) sentSlack() {
 	err := slackhookgo.Send(
-		am.url,
+		a.url,
 		slackhookgo.NewSlackMessage(
 			"username",
 			"backup",
 		).AddAttachment(
 			slackhookgo.MessageAttachment{
-				Color: am.color,
-				Text:  am.text,
+				Color: a.color,
+				Text:  a.text,
 				Title: "<!channel>",
 			},
 		),
 	)
-	checkIfError(err)
-}
-
-func checkIfError(err error) {
-	if err == nil {
-		return
-	}
-	log.Printf("error: %s", err)
+	checkError(err)
 }
 
 func main() {
@@ -53,11 +66,12 @@ func main() {
 
 	flag.Parse()
 
-	address := fmt.Sprintf("%s:%s", *host, *port)
-
 	for {
-		conn, err := net.DialTimeout(*protocol, address, 3*time.Second)
-		checkIfError(err)
+		c := connection{
+			protocol: *protocol,
+			address:  fmt.Sprintf("%s:%s", *host, *port),
+		}
+		conn, err := c.conn()
 		if err == nil {
 			conn.Close()
 			if sentUp == 0 {
