@@ -93,9 +93,6 @@ func main() {
                                 url:    *url,
                         }
                         am.sentSlack()
-                        fmt.Printf("%s\n", "\"the message is send\"")
-                } else {
-                fmt.Printf("%s\n", "\"to do - nothing\"") // to do - nothing
                 }
 		time.Sleep(time.Duration(*interval) * time.Second)
 	}
