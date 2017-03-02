@@ -10,51 +10,17 @@ import (
 	"github.com/lowstz/slackhookgo"
 )
 
-func checkIfError(err error) {
-	if err == nil {
-		return
-	}
-
-	//fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf("error: %s", err))
-	log.Printf("error: %s", err)
-	//os.Exit(1)
-}
-
-func sendToSlack(color, text, url *string) {
-	var attachment slackhookgo.MessageAttachment
-	attachment.Color = *color
-	attachment.Text = *text
-	attachment.Title = "<!channel>"
-	msg := slackhookgo.NewSlackMessage("slack-bot", "backup")
-	msg.IconEmoji = ":exclamation:"
-	msg.AddAttachment(attachment)
-	err := slackhookgo.Send(*url, msg)
-	checkIfError(err)
-}
-
-func checkFlags() {
-	flag.Parse()
-	/*	if *host == "" {
-			flag.PrintDefaults()
-			log.Fatal("host missing, exiting.")
-		}
-
-		if *port == "" {
-			flag.PrintDefaults()
-			log.Fatal("port missing, exiting.")
-		}
-	*/
-}
-
 func main() {
-	var color string
-	sentUp := 0
-	sentDown := 0
-	protocol := flag.String("protocol", "tcp", "protocol tcp/udp")
-	host := flag.String("host", "ya.ru", "destination host")
-	port := flag.String("port", "80", "destination port")
-	interval := flag.Uint("interval", 5, "interval check seconds")
-	url := flag.String("url", "", "hook url")
+	var (
+		color    string
+		sentUp   = 0
+		sentDown = 0
+		protocol = flag.String("protocol", "tcp", "protocol tcp/udp")
+		host     = flag.String("host", "ya.ru", "destination host")
+		port     = flag.String("port", "80", "destination port")
+		interval = flag.Uint("interval", 5, "interval check seconds")
+		url      = flag.String("url", "", "hook url")
+	)
 
 	flag.Parse()
 	checkFlags()
@@ -84,4 +50,45 @@ func main() {
 		}
 		time.Sleep(time.Duration(*interval) * time.Second)
 	}
+}
+
+func checkIfError(err error) {
+	if err == nil {
+		return
+	}
+
+	//fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf("error: %s", err))
+	log.Printf("error: %s", err)
+	//os.Exit(1)
+}
+
+func sendToSlack(color, text, url *string) {
+	err := slackhookgo.Send(
+		*url,
+		slackhookgo.NewSlackMessage(
+			"username",
+			"backup",
+		).AddAttachment(
+			slackhookgo.MessageAttachment{
+				Color: *color,
+				Text:  *text,
+				Title: "<!channel>",
+			},
+		),
+	)
+	checkIfError(err)
+}
+
+func checkFlags() {
+	flag.Parse()
+	/*	if *host == "" {
+			flag.PrintDefaults()
+			log.Fatal("host missing, exiting.")
+		}
+
+		if *port == "" {
+			flag.PrintDefaults()
+			log.Fatal("port missing, exiting.")
+		}
+	*/
 }
