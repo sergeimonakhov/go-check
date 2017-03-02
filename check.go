@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"errors"
 
 	"github.com/lowstz/slackhookgo"
 )
@@ -55,8 +56,9 @@ func (a *alertMessage) sentSlack() {
 
 func main() {
 	var (
-		sentUp   = 0
-		sentDown = 0
+		c 	string
+		t	string
+		lastSt  error = errors.New("zero step")
 		protocol = flag.String("protocol", "tcp", "protocol tcp/udp")
 		host     = flag.String("host", "ya.ru", "destination host")
 		port     = flag.String("port", "80", "destination port")
@@ -72,30 +74,26 @@ func main() {
 			address:  fmt.Sprintf("%s:%s", *host, *port),
 		}
 		conn, err := c.conn()
-		if err == nil {
-			conn.Close()
-			if sentUp == 0 {
-				am := alertMessage{
-					color: "good",
-					text:  "Destination host " + *host + ":" + *port + " reachable",
-					url:   *url,
-				}
-				am.sentSlack()
-				sentUp = 1
-				sentDown = 0
-			}
-		} else {
-			if sentDown == 0 {
-				am := alertMessage{
-					color: "danger",
-					text:  "Destination host " + *host + ":" + *port + " unreachable",
-					url:   *url,
-				}
-				am.sentSlack()
-				sentUp = 0
-				sentDown = 1
-			}
-		}
+                if err != lastSt {
+                        if err == nil {         // normal
+                                c = "good"
+                                t = " reachable"
+                                conn.Close()
+                        } else {                // not normal
+                                c = "danger"
+                                t = " unreachable"
+                        }
+                        lastSt = err            // key of success
+                        am := alertMessage{
+                                color:  c,
+                                text:   "Destination host " + *host + ":" + *port + t,
+                                url:    *url,
+                        }
+                        am.sentSlack()
+                        fmt.Printf("the message is send\n")
+                } else {
+                fmt.Printf("to do - nothing\n") // to do - nothin
+                }
 		time.Sleep(time.Duration(*interval) * time.Second)
 	}
 }
