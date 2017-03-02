@@ -80,16 +80,16 @@ func main() {
                 if e != lastE {
                         if e == 0 {		// normal
                                 k = "good"
-                                t = " reachable"
+                                t = "reachable"
                                 conn.Close()
                         } else {		// not normal
                                 k = "danger"
-                                t = " unreachable"
+                                t = "unreachable"
                         }
                         lastE = e		// key of success
                         am := alertMessage{
                                 color:  k,
-                                text:   "Destination host " + *host + ":" + *port + t,
+				text:   fmt.Sprintf("Destination host %s:%s %s\n", *host, *port, t),
                                 url:    *url,
                         }
                         am.sentSlack()
