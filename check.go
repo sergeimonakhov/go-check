@@ -56,7 +56,7 @@ func (a *alertMessage) sentSlack() {
 
 func main() {
 	var (
-		c 	string
+		k 	string
 		t	string
 		lastSt  error = errors.New("zero step")
 		protocol = flag.String("protocol", "tcp", "protocol tcp/udp")
@@ -76,16 +76,16 @@ func main() {
 		conn, err := c.conn()
                 if err != lastSt {
                         if err == nil {         // normal
-                                c = "good"
+                                k = "good"
                                 t = " reachable"
                                 conn.Close()
                         } else {                // not normal
-                                c = "danger"
+                                k = "danger"
                                 t = " unreachable"
                         }
                         lastSt = err            // key of success
                         am := alertMessage{
-                                color:  c,
+                                color:  k,
                                 text:   "Destination host " + *host + ":" + *port + t,
                                 url:    *url,
                         }
