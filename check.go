@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"time"
-	"errors"
 
 	"github.com/lowstz/slackhookgo"
 )
@@ -24,11 +23,14 @@ type connection struct {
 	address  string
 }
 
-func checkError(err error) {
+func checkError(err error) (int) {
 	if err == nil {
-		return
+		return 0
+	} else {
+		log.Printf("error: %s", err)
+		return 1
 	}
-	log.Printf("error: %s", err)
+
 }
 
 func (c *connection) conn() (net.Conn, error) {
@@ -58,7 +60,7 @@ func main() {
 	var (
 		k 	string
 		t	string
-		lastSt  error = errors.New("zero step")
+		lastE	int = -1
 		protocol = flag.String("protocol", "tcp", "protocol tcp/udp")
 		host     = flag.String("host", "ya.ru", "destination host")
 		port     = flag.String("port", "80", "destination port")
@@ -74,25 +76,26 @@ func main() {
 			address:  fmt.Sprintf("%s:%s", *host, *port),
 		}
 		conn, err := c.conn()
-                if err != lastSt {
-                        if err == nil {         // normal
+		e := checkError(err)
+                if e != lastE {
+                        if e == 0 {		// normal
                                 k = "good"
                                 t = " reachable"
                                 conn.Close()
-                        } else {                // not normal
+                        } else {		// not normal
                                 k = "danger"
                                 t = " unreachable"
                         }
-                        lastSt = err            // key of success
+                        lastE = e		// key of success
                         am := alertMessage{
                                 color:  k,
                                 text:   "Destination host " + *host + ":" + *port + t,
                                 url:    *url,
                         }
                         am.sentSlack()
-                        fmt.Printf("the message is send\n")
+                        fmt.Printf("%s\n", "\"the message is send\"")
                 } else {
-                fmt.Printf("to do - nothing\n") // to do - nothin
+                fmt.Printf("%s\n", "\"to do - nothing\"") // to do - nothin
                 }
 		time.Sleep(time.Duration(*interval) * time.Second)
 	}
