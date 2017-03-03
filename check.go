@@ -23,11 +23,12 @@ type connection struct {
 	address  string
 }
 
-func checkError(err error) {
+func checkError(err error) (int) {
 	if err == nil {
-		return
+		return 0
 	}
 	log.Printf("error: %s", err)
+	return 1
 }
 
 func (c *connection) conn() (net.Conn, error) {
@@ -55,8 +56,9 @@ func (a *alertMessage) sentSlack() {
 
 func main() {
 	var (
-		sentUp   = 0
-		sentDown = 0
+		k 	string
+		t	string
+		lastE	int = -1
 		protocol = flag.String("protocol", "tcp", "protocol tcp/udp")
 		host     = flag.String("host", "ya.ru", "destination host")
 		port     = flag.String("port", "80", "destination port")
@@ -72,30 +74,24 @@ func main() {
 			address:  fmt.Sprintf("%s:%s", *host, *port),
 		}
 		conn, err := c.conn()
-		if err == nil {
-			conn.Close()
-			if sentUp == 0 {
-				am := alertMessage{
-					color: "good",
-					text:  "Destination host " + *host + ":" + *port + " reachable",
-					url:   *url,
-				}
-				am.sentSlack()
-				sentUp = 1
-				sentDown = 0
-			}
-		} else {
-			if sentDown == 0 {
-				am := alertMessage{
-					color: "danger",
-					text:  "Destination host " + *host + ":" + *port + " unreachable",
-					url:   *url,
-				}
-				am.sentSlack()
-				sentUp = 0
-				sentDown = 1
-			}
-		}
+		e := checkError(err)
+                if e != lastE {
+                        if e == 0 {		// normal
+                                k = "good"
+                                t = "reachable"
+                                conn.Close()
+                        } else {		// not normal
+                                k = "danger"
+                                t = "unreachable"
+                        }
+                        lastE = e		// key of success
+                        am := alertMessage{
+                                color:  k,
+				text:   fmt.Sprintf("Destination host %s:%s %s\n", *host, *port, t),
+                                url:    *url,
+                        }
+                        am.sentSlack()
+                }
 		time.Sleep(time.Duration(*interval) * time.Second)
 	}
 }
