@@ -27,8 +27,8 @@ func checkError(err error) (int) {
 	if err == nil {
 		return 0
 	}
-		log.Printf("error: %s", err)
-		return 1
+	log.Printf("error: %s", err)
+	return 1
 }
 
 func (c *connection) conn() (net.Conn, error) {
