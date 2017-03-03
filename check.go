@@ -26,11 +26,9 @@ type connection struct {
 func checkError(err error) (int) {
 	if err == nil {
 		return 0
-	} else {
+	}
 		log.Printf("error: %s", err)
 		return 1
-	}
-
 }
 
 func (c *connection) conn() (net.Conn, error) {
