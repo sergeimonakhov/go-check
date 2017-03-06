@@ -33,7 +33,7 @@ func checkError(err error) (int) {
 
 func (c *connection) conn() (net.Conn, error) {
 	conn, err := net.DialTimeout(c.protocol, c.address, 3*time.Second)
-	checkError(err)
+//	checkError(err)
 	return conn, err
 }
 
