@@ -1,12 +1,29 @@
+env:
+  global:
+  - REPO=d1ablorus/go-check
+  - CGO_ENABLED=0
+
 language: go
 go:
   - tip
+
+services:
+  - docker
 
 install:
   - go get github.com/lowstz/slackhookgo
 
 script:
   - CGO_ENABLED=0 go build -o bin/go-check -ldflags '-s' .
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" != "master" ]; then
+    docker build -t $REPO .;
+    docker tag $REPO:latest $REPO:$TRAVIS_TAG;
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push $REPO;
+    docker push $REPO:$TRAVIS_TAG;
+    fi
 
 before_deploy:
   - export FILE_TO_UPLOAD=$(ls bin/go-check)
