@@ -1,0 +1,21 @@
+language: go
+go:
+  - tip
+
+install:
+  - go get github.com/lowstz/slackhookgo
+
+script:
+  - go build -o bin/go-check -i .
+
+before_deploy:
+  - export FILE_TO_UPLOAD=$(ls bin/go-check)
+
+deploy:
+  provider: releases
+  api_key:
+    secure: MDx48GfbSPZBghk4RIzw/RCKnSYvbH36922X5tBclPNGCOg73qy8y7vWEbbJd5MKDEgCh87DEBDft7HMmPG4K4asBSRqPOwK7tU//YiqUtiiCu3+32Gq59UnbDp+/gqbB00zXdmhMgor2L/BXs/WMR3wkhQUO49zRtdRF2I+nEVp0r3LVspjH528ZvZLBdFl02mWdNXkuSkounjij8dZFSUiY1Hgkhmtl146tjQN3mo9qXHymcE7/7wM07UAwQZPZvK7vwGE4xQjIlGYpAHFVWLurCsikSpm8655lUjsewYY204xNE7HgJUI8dn7wFFvFS6z6KUOb9qVbDpA2jhwPx68IsS2fRNTUOaiqwhlgjZHc4K8ZRBuMlk3tECsP0lRueF5nfUo4S/UfD9HIm1zriwmZa2+Tg6cHiI7xEfD9wOVO0bIMmul5yhhRsKGQUUW0eIqc4Xz2RB4GO7S0WvvmPWAwj6OR8vJVF+DtKDOIKAK/p9fopadcTm0zAkq7IYP1egp4ls2b2VEDjzc5F2f5q0jvmfZEY0DPrvEfXYP0JGwhmlU3lFMebOJHYN5fK7lyPl5S+ORBIgQEBZbNfvjb/9bppS5TcFxHzAh4ZIGTpvZTsbOZ5C2t6GgY1wipYlGzXwKL2cZ4gaOXR2Lhr0ozi5IgG4oJt65MHeQdjQusUk=
+  file: ${FILE_TO_UPLOAD}
+  skip_cleanup: true
+  on:
+    tags: true
