@@ -6,7 +6,7 @@ install:
   - go get github.com/lowstz/slackhookgo
 
 script:
-  - go build -o bin/go-check -i .
+  - CGO_ENABLED=0 go build -o bin/go-check -ldflags '-s' .
 
 before_deploy:
   - export FILE_TO_UPLOAD=$(ls bin/go-check)
@@ -18,4 +18,5 @@ deploy:
   file: ${FILE_TO_UPLOAD}
   skip_cleanup: true
   on:
+    repo: D1abloRUS/go-check
     tags: true
