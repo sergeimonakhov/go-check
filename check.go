@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/lowstz/slackhookgo"
 )
 
 type alertMessage struct {
-	url   string
-	text  string
-	color string
+	url     string
+	text    string
+	color   string
+	channel string
 }
 
 type connection struct {
 	protocol string
-	host     string
-	port     int
 	address  string
 }
 
@@ -38,58 +38,74 @@ func (c *connection) conn() (net.Conn, bool) {
 }
 
 func (a *alertMessage) sentSlack() {
-	err := slackhookgo.Send(
-		a.url,
-		slackhookgo.NewSlackMessage(
-			"username",
-			"backup",
-		).AddAttachment(
-			slackhookgo.MessageAttachment{
-				Color: a.color,
-				Text:  a.text,
-				Title: "<!channel>",
-			},
-		),
+	msg := slackhookgo.NewSlackMessage(
+		"Alert",
+		a.channel,
+	).AddAttachment(
+		slackhookgo.MessageAttachment{
+			Color: a.color,
+			Text:  a.text,
+			Title: "<!channel>",
+		},
 	)
+	msg.IconEmoji = ":exclamation:"
+	err := slackhookgo.Send(a.url, msg)
 	checkError(err)
 }
 
 func main() {
 	var (
-		k        string
-		t        string
-		lastE    bool
-		protocol = flag.String("protocol", "tcp", "protocol tcp/udp")
-		host     = flag.String("host", "ya.ru", "destination host")
-		port     = flag.Uint("port", 80, "destination port")
-		interval = flag.Uint("interval", 5, "interval check seconds")
-		url      = flag.String("url", "", "hook url")
+		color     string
+		status    string
+		lastState bool
+		protocol  = flag.String("protocol", "tcp", "protocol tcp/udp")
+		host      = flag.String("host", "", "destination host")
+		port      = flag.Uint("port", 80, "destination port")
+		interval  = flag.Uint("interval", 15, "interval check seconds")
+		url       = flag.String("url", "", "hook url")
+		slack     = flag.Bool("slack", false, "use -slack for send alert in slack")
+		channel   = flag.String("channel", "general", "slack channel")
 	)
 
 	flag.Parse()
 
-	for {
-		c := connection{
-			protocol: *protocol,
-			address:  fmt.Sprintf("%s:%v", *host, *port),
+	if len(os.Args) == 1 {
+		flag.PrintDefaults()
+		os.Exit(1)
+	} else if *host == "" {
+		log.Fatal("param '-host' is empty")
+	} else if *slack == true {
+		if *url == "" {
+			log.Fatal("param '-url' is empty")
 		}
+	}
+
+	c := connection{
+		protocol: *protocol,
+		address:  fmt.Sprintf("%s:%v", *host, *port),
+	}
+
+	for {
 		conn, err := c.conn()
-		if err != lastE {
+		if err != lastState {
 			if err == false { // normal
-				k = "good"
-				t = "reachable"
 				conn.Close()
+				color = "good"
+				status = "reachable"
 			} else { // not normal
-				k = "danger"
-				t = "unreachable"
+				color = "danger"
+				status = "unreachable"
 			}
-			lastE = err // key of success
-			am := alertMessage{
-				color: k,
-				text:  fmt.Sprintf("Destination host %s:%v %s\n", *host, *port, t),
-				url:   *url,
+			lastState = err // key of success
+			if *slack == true {
+				am := alertMessage{
+					channel: *channel,
+					color:   color,
+					text:    fmt.Sprintf("Destination host %s:%v %s\n", *host, *port, status),
+					url:     *url,
+				}
+				am.sentSlack()
 			}
-			am.sentSlack()
 		}
 		time.Sleep(time.Duration(*interval) * time.Second)
 	}
