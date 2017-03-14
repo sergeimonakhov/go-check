@@ -67,6 +67,10 @@ func main() {
 		channel   = flag.String("channel", "general", "slack channel")
 	)
 
+        flag.StringVar(protocol, "p", "tcp", "protocol tcp/udp")
+        flag.StringVar(host, "h", "", "destination host")
+        flag.UintVar(interval, "i", 15, "interval check seconds")
+
 	flag.Parse()
 
 	if len(os.Args) == 1 {
