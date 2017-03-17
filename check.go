@@ -65,13 +65,21 @@ func main() {
 		url       = flag.String("url", "", "hook url")
 		slack     = flag.Bool("slack", false, "use -slack for send alert in slack")
 		channel   = flag.String("channel", "general", "slack channel")
+		help	  = flag.Bool("help", false ,"use -help to see this information")
 	)
+
+        flag.StringVar(protocol, "p", "tcp", "protocol tcp/udp")
+        flag.StringVar(host, "h", "", "destination host")
+        flag.UintVar(interval, "i", 15, "interval check seconds")
 
 	flag.Parse()
 
 	if len(os.Args) == 1 {
 		flag.PrintDefaults()
 		os.Exit(1)
+	} else if *help == true {
+		flag.PrintDefaults()
+		os.Exit(0)
 	} else if *host == "" {
 		log.Fatal("param '-host' is empty")
 	} else if *slack == true {
