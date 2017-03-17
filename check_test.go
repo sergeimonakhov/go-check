@@ -2,4 +2,8 @@ package main
 
 import "testing"
 
-func 
+func TestSome() {
+
+	
+
+}
