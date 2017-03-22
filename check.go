@@ -93,8 +93,14 @@ func main() {
 				color = "good"
 				status = "reachable"
 			} else { // not normal
-				color = "danger"
-				status = "unreachable"
+				time.Sleep(time.Duration(5) * time.Second)
+				conn, errr := c.conn()
+				if errr != false {
+					color = "danger"
+					status = "unreachable"
+				} else {
+					conn.Close()
+				}
 			}
 			lastState = err // key of success
 			if *slack == true {
