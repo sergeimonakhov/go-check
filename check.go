@@ -65,12 +65,12 @@ func main() {
 		url       = flag.String("url", "", "hook url")
 		slack     = flag.Bool("slack", false, "use -slack for send alert in slack")
 		channel   = flag.String("channel", "general", "slack channel")
-		help	  = flag.Bool("help", false ,"use -help to see this information")
+		help      = flag.Bool("help", false, "use -help to see this information")
 	)
 
-        flag.StringVar(protocol, "p", "tcp", "protocol tcp/udp")
-        flag.StringVar(host, "h", "", "destination host")
-        flag.UintVar(interval, "i", 15, "interval check seconds")
+	flag.StringVar(protocol, "p", "tcp", "protocol tcp/udp")
+	flag.StringVar(host, "h", "", "destination host")
+	flag.UintVar(interval, "i", 15, "interval check seconds")
 
 	flag.Parse()
 
@@ -94,6 +94,7 @@ func main() {
 	}
 
 	for {
+	begin:
 		conn, err := c.conn()
 		if err != lastState {
 			if err == false { // normal
@@ -108,6 +109,7 @@ func main() {
 					status = "unreachable"
 				} else {
 					conn.Close()
+					goto begin
 				}
 			}
 			lastState = err // key of success
