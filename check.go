@@ -23,7 +23,7 @@ type connection struct {
 	address  string
 }
 
-func checkError(err error) bool {
+func CheckError(err error) bool {
 	if err == nil {
 		return false
 	}
@@ -31,13 +31,13 @@ func checkError(err error) bool {
 	return true
 }
 
-func (c *connection) conn() (net.Conn, bool) {
+func (c *connection) Conn() (net.Conn, bool) {
 	conn, err := net.DialTimeout(c.protocol, c.address, 3*time.Second)
-	errBool := checkError(err)
+	errBool := CheckError(err)
 	return conn, errBool
 }
 
-func (a *alertMessage) sentSlack() {
+func (a *alertMessage) SentSlack() bool {
 	msg := slackhookgo.NewSlackMessage(
 		"Alert",
 		a.channel,
@@ -50,7 +50,7 @@ func (a *alertMessage) sentSlack() {
 	)
 	msg.IconEmoji = ":exclamation:"
 	err := slackhookgo.Send(a.url, msg)
-	checkError(err)
+	return CheckError(err)
 }
 
 func main() {
@@ -95,7 +95,7 @@ func main() {
 
 	for {
 	begin:
-		conn, err := c.conn()
+		conn, err := c.Conn()
 		if err != lastState {
 			if err == false { // normal
 				conn.Close()
@@ -103,7 +103,7 @@ func main() {
 				status = "reachable"
 			} else { // not normal
 				time.Sleep(time.Duration(5) * time.Second)
-				conn, errr := c.conn()
+				conn, errr := c.Conn()
 				if errr != false {
 					color = "danger"
 					status = "unreachable"
@@ -120,7 +120,7 @@ func main() {
 					text:    fmt.Sprintf("Destination host %s:%v %s\n", *host, *port, status),
 					url:     *url,
 				}
-				am.sentSlack()
+				am.SentSlack()
 			}
 		}
 		time.Sleep(time.Duration(*interval) * time.Second)
