@@ -14,10 +14,11 @@ install:
   - go get github.com/lowstz/slackhookgo
 
 script:
-  - CGO_ENABLED=0 go build -o bin/go-check -ldflags '-s' .
+  - go test -v ./...
 
 after_success:
   - if [ "$TRAVIS_BRANCH" != "master" ]; then
+    CGO_ENABLED=0 go build -o bin/go-check -ldflags '-s' .;
     docker build -t $REPO .;
     docker tag $REPO:latest $REPO:$TRAVIS_TAG;
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
