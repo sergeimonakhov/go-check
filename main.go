@@ -24,7 +24,8 @@ func main() {
 
 	if *server == true {
 		r := httprouter.New()
-		r.GET("/api/v1/mazafaka", models.GetTask(env))
+		r.POST("/api/v1/activate", models.Activate(env))
+		r.GET("/api/v1/gettask/:id", models.GetTask(env))
 		http.ListenAndServe(":3000", r)
 	}
 }
