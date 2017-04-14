@@ -1,31 +1,26 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"go-check/config"
 	"go-check/models"
-	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
-	var (
-		server = flag.Bool("server", true, "use -server for start restapi")
-	)
-	flag.Parse()
 
 	db, err := config.NewDB("postgres://checker:checker@localhost/cheker?sslmode=disable")
 	if err != nil {
-		log.Print(err)
+		fmt.Println(err.Error())
 	}
 	env := &config.Env{DB: db}
 
-	if *server == true {
-		r := httprouter.New()
-		r.POST("/api/v1/activate", models.Activate(env))
-		r.GET("/api/v1/gettask/:id", models.GetTask(env))
-		http.ListenAndServe(":3000", r)
-	}
+	r := httprouter.New()
+	r.POST("/api/v1/activate", models.Activate(env))
+	r.GET("/api/v1/gettask/:id", models.GetTask(env))
+	r.POST("/api/v1/statusupdate", models.StatusUpdate(env))
+
+	http.ListenAndServe(":3000", r)
 }
