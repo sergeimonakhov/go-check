@@ -2,7 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 )
 
 //Tasks table
@@ -23,94 +23,68 @@ type Checker struct {
 	status    bool
 }
 
-//GetTasksReq SELECT
+//FailOnRequest func
+func FailOnRequest(err error) error {
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+//GetTasksReq SELECT all task from checker
 func GetTasksReq(db *sql.DB, id int) ([]*Tasks, error) {
 	rows, err := db.Query("SELECT * FROM tasks WHERE cheker_id = $1", id)
-
-	if err != nil {
-		return nil, err
-	}
+	FailOnRequest(err)
 	defer rows.Close()
 
 	bks := make([]*Tasks, 0)
 	for rows.Next() {
 		bk := new(Tasks)
 		err = rows.Scan(&bk.ID, &bk.chekerID, &bk.userID, &bk.Interval, &bk.Target, &bk.slackID, &bk.status)
-		if err != nil {
-			return nil, err
-		}
+		FailOnRequest(err)
 		bks = append(bks, bk)
 	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
+	err = rows.Err()
+	FailOnRequest(err)
+
 	return bks, nil
 }
 
-//GetCheckerID SELECT
-func GetCheckerID(db *sql.DB, hash string) ([]*Checker, error) {
-	rows, err := db.Query("SELECT * FROM chekers WHERE hash_id=(SELECT hash_id from hash WHERE hash=$1)", hash)
+//GetCheckerID SELECT cheker_id with hash_id
+func GetCheckerID(db *sql.DB, hash string) (Checker, error) {
+	stmt, err := db.Prepare("SELECT * FROM chekers WHERE hash_id=(SELECT hash_id from hash WHERE hash=$1)")
+	FailOnRequest(err)
 
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	var id Checker
+	err = stmt.QueryRow(hash).Scan(&id.CheckerID, &id.hashID, &id.status)
+	FailOnRequest(err)
 
-	bks := make([]*Checker, 0)
-	for rows.Next() {
-		bk := new(Checker)
-		err = rows.Scan(&bk.CheckerID, &bk.hashID, &bk.status)
-		if err != nil {
-			return nil, err
-		}
-		bks = append(bks, bk)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return bks, nil
+	return id, nil
 }
 
-//InsertHash INSERT
+//InsertHash INSERT new clients
 func InsertHash(db *sql.DB, hash string) error {
 	query := `INSERT INTO chekers (hash_id, status)
             VALUES ((SELECT hash_id from hash WHERE hash=$1), true)
             ON CONFLICT DO NOTHING;`
 
 	stmt, err := db.Prepare(query)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
+	FailOnRequest(err)
 
 	_, err = stmt.Exec(hash)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
+	FailOnRequest(err)
 
 	return nil
 }
 
-//UpdateStatus Update
+//UpdateStatus Update targer status
 func UpdateStatus(db *sql.DB, id int, status bool) error {
-	query := `UPDATE tasks SET status = $2 WHERE tasks_id = $1;`
-
-	stmt, err := db.Prepare(query)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
+	stmt, err := db.Prepare("UPDATE tasks SET status = $2 WHERE tasks_id = $1;")
+	FailOnRequest(err)
 
 	_, err = stmt.Exec(id, status)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
+	FailOnRequest(err)
 
 	return nil
 }

@@ -20,7 +20,15 @@ type Status struct {
 	Status bool
 }
 
-//GetTask json get
+//FailOnHtpp func
+func FailOnHtpp(err error, w http.ResponseWriter, msg string, httpcode int) {
+	if err != nil {
+		http.Error(w, msg, httpcode)
+		return
+	}
+}
+
+//GetTask /api/v1/gettask/:id return json []
 func GetTask(env *config.Env) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		id, _ := strconv.Atoi(p.ByName("id"))
@@ -31,10 +39,7 @@ func GetTask(env *config.Env) httprouter.Handle {
 		}
 
 		bks, err := GetTasksReq(env.DB, id)
-		if err != nil {
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
+		FailOnHtpp(err, w, "Requst not found", 500)
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if err = json.NewEncoder(w).Encode(bks); err != nil {
@@ -43,7 +48,7 @@ func GetTask(env *config.Env) httprouter.Handle {
 	}
 }
 
-//Activate post json
+//Activate post /api/v1/activate json {"hash": "123"}
 func Activate(env *config.Env) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var u Client
@@ -57,22 +62,16 @@ func Activate(env *config.Env) httprouter.Handle {
 			http.Error(w, "Please send a request body", 400)
 			return
 		}
+
 		err := json.NewDecoder(r.Body).Decode(&u)
-		if err != nil {
-			http.Error(w, err.Error(), 400)
-			return
-		}
+		FailOnHtpp(err, w, "json error", 400)
+
 		err = InsertHash(env.DB, u.Hash)
-		if err != nil {
-			http.Error(w, "hash key not found", 500)
-			return
-		}
+		FailOnHtpp(err, w, "hash key not found", 500)
 
 		bks, err := GetCheckerID(env.DB, u.Hash)
-		if err != nil {
-			http.Error(w, "checker id not found", 500)
-			return
-		}
+		FailOnHtpp(err, w, "checker id not found", 500)
+
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		if err = json.NewEncoder(w).Encode(bks); err != nil {
 			w.WriteHeader(500)
@@ -80,7 +79,7 @@ func Activate(env *config.Env) httprouter.Handle {
 	}
 }
 
-//StatusUpdate post json
+//StatusUpdate post /api/v1/statusupdate  json {"id": 1, "status": 0}
 func StatusUpdate(env *config.Env) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		var s Status
@@ -95,15 +94,11 @@ func StatusUpdate(env *config.Env) httprouter.Handle {
 		}
 
 		err := json.NewDecoder(r.Body).Decode(&s)
-		if err != nil {
-			http.Error(w, err.Error(), 400)
-			return
-		}
+		FailOnHtpp(err, w, "json error", 400)
+
 		err = UpdateStatus(env.DB, s.ID, s.Status)
-		if err != nil {
-			http.Error(w, "task not found", 500)
-			return
-		}
+		FailOnHtpp(err, w, "task not found", 500)
+
 		w.WriteHeader(200)
 	}
 }
